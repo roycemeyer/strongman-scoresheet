@@ -4,7 +4,7 @@ import ScoresheetEvents from './ScoresheetEvents'
 import MyTextField from '../MyTextField';
 import MyLabel from '../MyLabel';
 //----------------------------
-function ScoresheetFrame({isEditable}) {
+function ScoresheetFrame({isEditable, isCountback}) {
   const [newEventName, setNewEventName] = useState('');
   const [newEventType, setNewEventType] = useState('');
   const [newAthleteName, setNewAthleteName] = useState('');
@@ -14,7 +14,7 @@ function ScoresheetFrame({isEditable}) {
   const eventFieldRef = useRef();
   const athleteFieldRef = useRef();
 
-  // This form of modifyEvent is designed to force each update to use the most recent events. 
+  // This form of modifyEvent forces each update to use the most recent events. 
   const modifyEvent = (eventIndex, newEventData) => {
     setEvents(currentEvents => {
       const updatedEvents = [...currentEvents];
@@ -106,10 +106,10 @@ function ScoresheetFrame({isEditable}) {
   }
 
   const updateScoresheet = () => {
-    const updatedAthletes = [...athletes];
+    const scoredAthletes = [...athletes];
 
     // Step 1: Calculate Total Points for Each Athlete
-    updatedAthletes.forEach(athlete => {
+    scoredAthletes.forEach(athlete => {
       let totalPoints = 0;
       events.forEach(event => {
         //console.log("Events results List length: " + events.results.length)
@@ -126,14 +126,126 @@ function ScoresheetFrame({isEditable}) {
     });
 
     // Step 2: Sort Athletes Based on Total Points and Assign Placings
-    updatedAthletes.sort((a, b) => b.totalPoints - a.totalPoints);
-    updatedAthletes.forEach((athlete, index) => {
-      athlete.place = index + 1; // Assign placings based on sorted order
-    });
+    
+    const athletePlacings = assignAthletePlacings(scoredAthletes);
 
-    const finalAthletes = [...updatedAthletes]
+    const finalAthletes = [...athletePlacings]
       .sort((a, b) => athletes.findIndex(athlete => athlete.athleteName === a.athleteName) - athletes.findIndex(athlete => athlete.athleteName === b.athleteName));
       setAthletes(finalAthletes);
+  }
+
+  const assignAthletePlacings = (scoredAthletes) => {
+    scoredAthletes.sort((a, b) => b.totalPoints - a.totalPoints);
+    let tiesBuffer = [];
+    let currentPlace = 1;
+    const placedAthletes = [];
+
+    scoredAthletes.forEach((athlete, index) => {
+      // detect ties
+      if(scoredAthletes.length > index+1 && athlete.totalPoints === scoredAthletes[index+1].totalPoints)
+      {
+        tiesBuffer.push(athlete);
+        if((scoredAthletes.length === index+2 // to handle if the next is the last athlete in list
+        || athlete.totalPoints !== scoredAthletes[index+2].totalPoints)){ // Is this the last tie pair in the group?
+          // If it is the last tie pair in the group, add the next one since it won't tie with ITS next
+          tiesBuffer.push(scoredAthletes[index+1]);
+          // since last pair it's complete; calculate placing
+
+          if (isCountback){ // countback will place athletes based on most 1st place finishes, then 2nd if tied on 1st, etc.
+            tiesBuffer.forEach((tiedAthlete) => {
+              console.log(tiedAthlete.athleteName + " tied with points: " + tiedAthlete.totalPoints)
+            });
+            const sortedBuffer = countback(tiesBuffer);
+            sortedBuffer.forEach((athlete) => {
+              placedAthletes.push(athlete);
+            });
+          }
+        }
+      }
+      // Check if last tie in group
+      else if (tiesBuffer.indexOf(athlete) !== -1){ // if the athlete exists in the tie buffer but is not tied with its next, it's the last of a tie group
+        tiesBuffer = []; // clear out the buffer since this tie group is completed
+        return;
+      }
+      else { // if we got here, it means there's no tie and no tie group to worry about\
+        console.log("No tie with athlete "+ athlete.athleteName)
+        placedAthletes.push({
+          athleteName: athlete.athleteName,
+          result: athlete.result,
+          place: 0,
+          totalPoints: athlete.totalPoints
+        });
+      }
+    });
+    console.log("Sorted Athlete Placings: ")
+    placedAthletes.forEach((athlete) => {
+      console.log(athlete.athleteName + " score: " + athlete.totalPoints)
+      athlete.place = currentPlace;
+      currentPlace++;
+    });
+    return placedAthletes;
+  };
+
+  const countback = (tiesBuffer) => {
+    const sortedBuffer = [];
+    // CountbackTotals will hold a set of integers for each tied athlete equal to the number of athletes
+    // each integer will represent the number of placings. So 3 1st place, 1 2nd place, 2 3rd place is 3,1,2 for example
+    const countbackTotals = []; 
+    tiesBuffer.forEach(() => {
+      // populate countbackTotals 2D array with initial 0s
+      const total = [];
+      athletes.forEach(() => {
+        total.push(0);
+      });
+      countbackTotals.push(total);
+    });
+    tiesBuffer.forEach((tiedAthlete, athIdx) => {
+      // iterate through each event, and each result and total those into countback totals for each athlete
+      events.forEach((event) => {
+        event.results.forEach((result) => {
+          if(tiedAthlete.athleteName === result.athleteName){
+            countbackTotals[athIdx][result.place-1] += 1;
+          }
+        });
+      });
+    });
+    countbackTotals.forEach((athleteCounts) => {
+      let countPrint = "";
+      athleteCounts.forEach((place) => {
+        countPrint += "[" + place + "]"
+      });
+      console.log(countPrint);
+    });
+    // now we have the countback data, we need to sort the tiesBuffer 
+    const sortedTies = sortTiedAthletes(tiesBuffer, countbackTotals);
+    sortedTies.forEach((tiedAthlete) => {
+      sortedBuffer.push(tiedAthlete);
+    });
+    console.log("Tiebreaker results order: ")
+    sortedTies.forEach((athlete) => {
+      console.log("ties: " + athlete.athleteName)
+    });
+    return sortedBuffer;
+  };
+
+  const sortTiedAthletes = (tiedAthletes, countbackTotals) => {
+    // Assuming the index of each athlete in `tiedAthletes` corresponds to the index of their countbackTotals
+    return tiedAthletes.sort((a, b) => {
+      const indexA = tiedAthletes.findIndex(athlete => athlete.athleteName === a.athleteName);
+      const indexB = tiedAthletes.findIndex(athlete => athlete.athleteName === b.athleteName);
+  
+      // Iterate through each placing, starting from 1st place finishes
+      for (let i = 0; i < countbackTotals[indexA].length; i++) {
+        // Compare the number of finishes at the current placing
+        if (countbackTotals[indexA][i] !== countbackTotals[indexB][i]) {
+          // Invert the comparison because a higher number of first place finishes takes precedence
+          return countbackTotals[indexB][i] - countbackTotals[indexA][i];
+        }
+      }
+      
+      // If all placings are tied, sort by name or maintain the existing order
+      return a.athleteName.localeCompare(b.athleteName);
+    });
   }
 
   const renderEvents = () => {
