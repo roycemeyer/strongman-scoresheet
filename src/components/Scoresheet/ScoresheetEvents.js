@@ -154,6 +154,12 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
     return 'text';
   }
 
+  const checkIfResult = (index) => {
+    if(event.results[index])
+      return event.results[index].result;
+    return "";
+  }
+
   const renderResults = () => {
     const resultDivs = [];
     const placingDivs = [];
@@ -183,7 +189,7 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
             inputType={handleTextLimit(event.eventType)}
             onInputChange={(value) => handleScoreInput(value, index)} 
             width="50px"
-            initialValue={event.results[index].result}
+            initialValue={checkIfResult(index)}
           />
         );
       } else {
