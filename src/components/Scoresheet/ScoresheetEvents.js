@@ -125,7 +125,7 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
 
   const handleScoreInput = (newResult, index) => {
     if (newResult === "" || newResult < 0){
-      newResult = 0;
+      return;
     }
     // Update the event.result array with the new value at the specified index
     const updatedResults = event.results.map((result, idx) => {
@@ -159,6 +159,32 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
       return event.results[index].result;
     return "";
   }
+
+  const renderTips = () => {
+    let tipText = "";
+    let tipText2 = "";
+    if(event.eventType === "MWeight")
+      tipText = "Weight in any units";
+    else if(event.eventType === "MReps")
+      tipText = "Number of reps achieved";
+    else if(event.eventType === "MDist")
+      tipText = "Distance in any units";
+    else
+      tipText = "";
+    const div = 
+      <div className='filler'>
+        <div className='horizontal-line'></div>
+        <MyLabel 
+          text={tipText}
+          fontSize="12px"
+        ></MyLabel>
+        <MyLabel 
+          text={tipText2}
+          fontSize="12px"
+        ></MyLabel>
+      </div>
+    return div;
+  };
 
   const renderResults = () => {
     const resultDivs = [];
@@ -221,6 +247,7 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
         <div className='filler'>
           <MyLabel text={event.eventName}/>
           {renderResults()}
+          {renderTips()}
         </div>
   )
 }
