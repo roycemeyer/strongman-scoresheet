@@ -229,7 +229,7 @@ function ScoresheetFrame({isEditable, isCountback}) {
   };
 
   const sortTiedAthletes = (tiedAthletes, countbackTotals) => {
-    // Assuming the index of each athlete in `tiedAthletes` corresponds to the index of their countbackTotals
+    // The index of each athlete in `tiedAthletes` corresponds to the index of their countbackTotals
     return tiedAthletes.sort((a, b) => {
       const indexA = tiedAthletes.findIndex(athlete => athlete.athleteName === a.athleteName);
       const indexB = tiedAthletes.findIndex(athlete => athlete.athleteName === b.athleteName);

@@ -160,11 +160,11 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
     const pointsDivs = [];
 
     if(event.eventType === "MWeight")
-      resultDivs.push(<MyLabel text = "Weight"/>);
+      resultDivs.push(<MyLabel text = "Wht"/>);
     else if(event.eventType === "MReps")
       resultDivs.push(<MyLabel text = "Reps"/>);
     else if(event.eventType === "MDist")
-      resultDivs.push(<MyLabel text = "Distance"/>);
+      resultDivs.push(<MyLabel text = "Dist"/>);
     else
       resultDivs.push(<MyLabel text = "Result"/>);
 
@@ -173,7 +173,7 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
     placingDivs.push(<MyLabel text = "Place"/>);
     placingDivs.push(<div className='horizontal-line'/>);
 
-    pointsDivs.push(<MyLabel text = "Points"/>);
+    pointsDivs.push(<MyLabel text = "Pts"/>);
     pointsDivs.push(<div className='horizontal-line'/>);
 
     athletes.forEach((athlete, index) => {
@@ -183,6 +183,7 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
             inputType={handleTextLimit(event.eventType)}
             onInputChange={(value) => handleScoreInput(value, index)} 
             width="50px"
+            initialValue={event.results[index].result}
           />
         );
       } else {

@@ -1,14 +1,19 @@
-import React, { forwardRef, useImperativeHandle, useState } from 'react';
+import React, { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
 
-const MyTextField = forwardRef (({ inputType, onInputChange, placeholder, width }, ref ) => {
+const MyTextField = forwardRef (({ inputType, onInputChange, placeholder, width, initialValue }, ref ) => {
 
   const [inputValue, setInputValue] = useState('');
+
+  useEffect(() => {
+    if (initialValue !== undefined) {
+      setInputValue(initialValue);
+    }
+  }, [initialValue]);
 
   const handleInputChange = (event) => {
     const newValue = event.target.value;
     setInputValue(newValue); 
-    onInputChange(newValue); 
-    
+    if(onInputChange) onInputChange(newValue); 
   };
 
   const determineInputType  = (inputType) => {
@@ -16,13 +21,6 @@ const MyTextField = forwardRef (({ inputType, onInputChange, placeholder, width 
     if (inputType === 'integer') return 'number';
     return 'text';
   }
-
-  const handlePaste = (event) => {
-    const pasteContent = event.clipboardData.getData('text')
-    if ((!/^-?\d*$/.test(pasteContent)) && inputType === 'integer') {
-      event.preventDefault();
-    }
-  };
 
   useImperativeHandle(ref, () => ({
     clearText() {
