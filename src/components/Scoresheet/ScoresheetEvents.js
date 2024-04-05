@@ -26,7 +26,7 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
       });
       console.log ("Event Index: " + eventIndex);
       newEventResults.forEach((result, index) => {
-        console.log("1- result assignment: " + result.athleteName + " result: " + result.result + " points: " + result.points);
+        //console.log("1- result assignment: " + result.athleteName + " result: " + result.result + " points: " + result.points);
       });
       onModifyEvent(eventIndex, {eventName:event.eventName, eventType:event.eventType, results:[...newEventResults]});
     }
@@ -58,10 +58,70 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
     }
   }, [event.results]); // Depend on prevEventResults via custom hook
 
+  // this is where we handle different event types
+  const sortPositiveResults = (athletes) => {
+    // Handle max distance, weight, or reps by simply sorting by the numeric value of results
+    if (event.eventType === 'MDist' || event.eventType === 'MWeight' || event.eventType === 'MReps') {
+      return athletes.sort((a, b) => parseFloat(b.result) - parseFloat(a.result));
+    } else if (event.eventType === 'DistToTime') {
+      // Sort such that all times (ending in 's') are above all distances (ending in 'd'),
+      // and within each group, sort by the numeric value (lower times are better, shorter distances for those who didn't finish)
+      return athletes.sort((a, b) => {
+        const isATime = a.result.endsWith('s');
+        const isBTime = b.result.endsWith('s');
+        const numA = parseFloat(a.result);
+        const numB = parseFloat(b.result);
+  
+        if (isATime && !isBTime) return -1; // A is time, B is distance, A goes first
+        if (!isATime && isBTime) return 1;  // A is distance, B is time, B goes first
+  
+        // If both are times or both are distances, sort by numeric value
+        // For times, lower is better. For distances (not finish), higher is better.
+        return isATime ? numA - numB : numB - numA;
+      });
+    } else if (event.eventType === 'RepsInTime') {
+      // Input has been already validated in validateResults()
+      return athletes.sort((a, b) => {
+        const [repsA, timeA] = a.result.match(/(\d{1,2}) in (\d{0,3}(\.\d{1,2})?)s/).slice(1, 3).map(Number);
+        const [repsB, timeB] = b.result.match(/(\d{1,2}) in (\d{0,3}(\.\d{1,2})?)s/).slice(1, 3).map(Number);
+    
+        // First, sort by reps (higher is better)
+        if (repsA !== repsB) return repsB - repsA;
+    
+        // If reps are equal, sort by time (lower is better)
+        return timeA - timeB;
+      });
+    }
+  
+    // Return the original array if none of the conditions match
+    return athletes;
+  };
+
+  const validateResults = () => {
+    let isValidInput = true;
+    // Validation for simple event types is accomplished inside the MyTextField component.
+    //  Reps In Time was too complex of Regex for me to validate there without restricting input. 
+    if(event.eventType === 'RepsInTime'){
+      event.results.forEach((athlete) => {
+        const fullRegex = /^(\d{1,2} in \d{0,3}(\.\d{1,2})?s)$/;
+        console.log("result: " + athlete.result);
+        if (!fullRegex.test(athlete.result)) {
+          console.log("Failed")
+          isValidInput = false;
+        }
+        else {
+          console.log("Passed")
+        }
+      });
+    }
+    return isValidInput;
+  };
+
   const calculateResults = () => {
     // Step 1: Sort the results based on the 'result' property
-    const athletesWithResult = event.results.filter(a => parseFloat(a.result) > 0)
-    .sort((a, b) => parseFloat(b.result) - parseFloat(a.result));
+    const resultsValidated = validateResults();
+    if(!resultsValidated) return;
+    const athletesWithResult = sortPositiveResults(event.results.filter(a => parseFloat(a.result) > 0));
     const athletesWithZero = event.results.filter(a => parseFloat(a.result) === 0);
 
     let currentPlace = 1;
@@ -118,7 +178,7 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
     })
     // Update event results state with the new places and points
     finalResults.forEach((result, index) => {
-      console.log("3- result assignment: " + result.athleteName + " result: " + result.result + " points: " + result.points);
+      //console.log("3- result assignment: " + result.athleteName + " result: " + result.result + " points: " + result.points);
     });
     onModifyEvent(eventIndex, {eventName:event.eventName, eventType:event.eventType, results:[...finalResults]});
   };
@@ -136,20 +196,28 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
       return result;
     });
     updatedResults.forEach((result, index) => {
-      console.log("4- result assignment: " + result.athleteName + " result: " + result.result + " points: " + result.points);
+      //console.log("4- result assignment: " + result.athleteName + " result: " + result.result + " points: " + result.points);
     });
     onModifyEvent(eventIndex, {eventName:event.eventName, eventType:event.eventType, results:[...updatedResults]});
   };
 
   const handleTextLimit = (type) => {
-    if (type === 'MWeight'
-      || type === 'MReps')
+    if (type === 'MReps')
     {
       return 'integer'
     }
-    if (type === 'MDist')
+    if (type === 'MWeight'
+    || type === 'MDist')
     {
       return 'number'
+    }
+    if (type === 'DistToTime')
+    {
+      return 'dist-time'
+    }
+    if (type === 'RepsInTime')
+    {
+      return 'reps-time'
     }
     return 'text';
   }
@@ -161,14 +229,28 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
   }
 
   const renderTips = () => {
+    if(!isEditable){
+      return;
+    };
     let tipText = "";
     let tipText2 = "";
+    let tipText3 = "";
     if(event.eventType === "MWeight")
       tipText = "Weight in any units";
     else if(event.eventType === "MReps")
       tipText = "Number of reps achieved";
     else if(event.eventType === "MDist")
       tipText = "Distance in any units";
+    else if(event.eventType === "DistToTime"){
+      tipText = "Best Time - time in s";
+      tipText2 = "or distance in m or ft";
+      tipText3 = "eg: '42.3s' or '12.73m'";
+    }
+    else if(event.eventType === "RepsInTime"){
+      tipText = "Reps in Time";
+      tipText2 = "X in YY.YYs";
+      tipText3 = "eg: '3 in 12.72s'";
+    }
     else
       tipText = "";
     const div = 
@@ -182,13 +264,17 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
           text={tipText2}
           fontSize="12px"
         ></MyLabel>
+        <MyLabel 
+          text={tipText3}
+          fontSize="12px"
+        ></MyLabel>
       </div>
     return div;
   };
 
   const renderResults = () => {
     const resultDivs = [];
-    const placingDivs = [];
+    //const placingDivs = [];
     const pointsDivs = [];
 
     if(event.eventType === "MWeight")
@@ -202,19 +288,20 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
 
     resultDivs.push(<div className='horizontal-line'/>);
 
-    placingDivs.push(<MyLabel text = "Place"/>);
-    placingDivs.push(<div className='horizontal-line'/>);
+    //placingDivs.push(<MyLabel text = "Place"/>);
+    //placingDivs.push(<div className='horizontal-line'/>);
 
     pointsDivs.push(<MyLabel text = "Pts"/>);
     pointsDivs.push(<div className='horizontal-line'/>);
-
+    let width = "80px";
+    if(event.eventType === "RepsInTime") width = "80px";
     athletes.forEach((athlete, index) => {
       if (isEditable) {
         resultDivs.push(
           <MyTextField 
             inputType={handleTextLimit(event.eventType)}
             onInputChange={(value) => handleScoreInput(value, index)} 
-            width="50px"
+            width={width}
             initialValue={checkIfResult(index)}
           />
         );
@@ -225,8 +312,8 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
       // For placingDivs and pointsDivs, if you plan to also make them dynamic, ensure correct access
       if(event.results.length === athletes.length)
       {
-        placingDivs.push(<MyLabel text={event.results[index].place} />);
-        pointsDivs.push(<MyLabel text={event.results[index].points} />);
+        //placingDivs.push(<MyLabel text={event.results[index].place}/>);
+        pointsDivs.push(<MyLabel text={event.results[index].points}/>);
       }
     });
 
@@ -234,8 +321,8 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
       <div className='horizontal-list'>
         <div className='vertical-list'>{resultDivs}</div>
         <div className='soft-vertical-line'></div>
-        <div className='vertical-list'>{placingDivs}</div>
-        <div className='soft-vertical-line'></div>
+        {/* <div className='vertical-list'>{placingDivs}</div>
+        <div className='soft-vertical-line'></div> */}
         <div className='vertical-list'>{pointsDivs}</div>
       </div>
     ;

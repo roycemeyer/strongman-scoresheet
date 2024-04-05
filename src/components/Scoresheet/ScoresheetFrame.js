@@ -36,6 +36,8 @@ function ScoresheetFrame({isEditable, isCountback}) {
     if(
       newEventType !== "MWeight" &&
       newEventType !== "MReps" &&
+      newEventType !== "DistToTime" &&
+      newEventType !== "RepsInTime" &&
       newEventType !== "MDist"
       )
     {
@@ -290,7 +292,7 @@ function ScoresheetFrame({isEditable, isCountback}) {
     });
     const div = 
       <div className='filler'>
-        <div className='vertical-list'><MyLabel text ="-"/></div>
+        <button className='button-styling' onClick={updateScoresheet}>Update</button>
         <div className='horizontal-list'>
           <div className='vertical-list'>{placings}</div>
           <div className='soft-vertical-line'></div>
@@ -316,6 +318,8 @@ function ScoresheetFrame({isEditable, isCountback}) {
               <option className='input' value="MWeight">Max Weight</option>
               <option className='input' value="MReps">Max Reps</option>
               <option className='input' value="MDist">Max Distance</option>
+              <option className='input' value="DistToTime">Distance in Time</option>
+              <option className='input' value="RepsInTime">Reps in Time</option>
             </select>
             <button className='button-styling' onClick={addEvent}>Add Event</button>
           </div>
@@ -344,7 +348,7 @@ function ScoresheetFrame({isEditable, isCountback}) {
       <div className='scoresheet-events'>
         <div className='athletes-list'>
           <div className='right-justify'>
-            <button className='button-styling' onClick={updateScoresheet}>Update</button>
+            <div className='vertical-list'><MyLabel text ="-"/></div>
           </div>
             <MyLabel text={'Athletes'}/>
           <div className='horizontal-line'/>
