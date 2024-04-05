@@ -64,6 +64,9 @@
   background-color: rgb(58, 68, 55);
   margin-left: 0px;
 }
+.my-dark-textfield{
+  margin-left: 0px;
+}
 .my-textfield::placeholder{
   color: rgb(211, 240, 202);
 }
@@ -135,6 +138,10 @@
   background-color: rgb(40, 44, 38);
   margin-left: 8px;
   margin-right: 10px;
+}
+.thyckk-horizontal-line{
+  height: 10px;
+  background-color: rgb(40, 44, 38);
 }
 .soft-vertical-line{
   width: 1px; /* Width of the line */

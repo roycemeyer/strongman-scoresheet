@@ -4,7 +4,7 @@ import ScoresheetEvents from './ScoresheetEvents'
 import MyTextField from '../MyTextField';
 import MyLabel from '../MyLabel';
 //----------------------------
-function ScoresheetFrame({isEditable, isCountback}) {
+function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
   const [newEventName, setNewEventName] = useState('');
   const [newEventType, setNewEventType] = useState('');
   const [newAthleteName, setNewAthleteName] = useState('');
@@ -348,7 +348,7 @@ function ScoresheetFrame({isEditable, isCountback}) {
       <div className='scoresheet-events'>
         <div className='athletes-list'>
           <div className='right-justify'>
-            <div className='vertical-list'><MyLabel text ="-"/></div>
+            <div className='vertical-list'><MyLabel text ={scoresheetName}/></div>
           </div>
             <MyLabel text={'Athletes'}/>
           <div className='horizontal-line'/>
