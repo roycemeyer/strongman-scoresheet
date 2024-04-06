@@ -20,7 +20,7 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
       const newEventResults = [...event.results]; 
       newEventResults.push({
         athleteName: athletes[athletes.length-1].athleteName,
-        result: 0,
+        result: '',
         place: athletes.length,
         points: 0
       });
@@ -61,58 +61,117 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
   // this is where we handle different event types
   const sortPositiveResults = (athletes) => {
     // Handle max distance, weight, or reps by simply sorting by the numeric value of results
-    if (event.eventType === 'MDist' || event.eventType === 'MWeight' || event.eventType === 'MReps') {
-      return athletes.sort((a, b) => parseFloat(b.result) - parseFloat(a.result));
-    } else if (event.eventType === 'DistToTime') {
-      // Sort such that all times (ending in 's') are above all distances (ending in 'd'),
-      // and within each group, sort by the numeric value (lower times are better, shorter distances for those who didn't finish)
-      return athletes.sort((a, b) => {
-        const isATime = a.result.endsWith('s');
-        const isBTime = b.result.endsWith('s');
-        const numA = parseFloat(a.result);
-        const numB = parseFloat(b.result);
-  
-        if (isATime && !isBTime) return -1; // A is time, B is distance, A goes first
-        if (!isATime && isBTime) return 1;  // A is distance, B is time, B goes first
-  
-        // If both are times or both are distances, sort by numeric value
-        // For times, lower is better. For distances (not finish), higher is better.
-        return isATime ? numA - numB : numB - numA;
-      });
-    } else if (event.eventType === 'RepsInTime') {
-      // Input has been already validated in validateResults()
-      return athletes.sort((a, b) => {
-        const [repsA, timeA] = a.result.match(/(\d{1,2}) in (\d{0,3}(\.\d{1,2})?)s/).slice(1, 3).map(Number);
-        const [repsB, timeB] = b.result.match(/(\d{1,2}) in (\d{0,3}(\.\d{1,2})?)s/).slice(1, 3).map(Number);
-    
-        // First, sort by reps (higher is better)
-        if (repsA !== repsB) return repsB - repsA;
-    
-        // If reps are equal, sort by time (lower is better)
-        return timeA - timeB;
-      });
+    switch (event.eventType)
+    {
+      case 'MDist':
+      case 'MWeight':
+      case 'MTime':
+      case 'MReps':
+        return athletes.sort((a, b) => parseFloat(b.result) - parseFloat(a.result));
+      case 'DistToTime':
+        return sortDistToTime(athletes);
+      case 'RepsInTime':
+        return sortRepsInTime(athletes);
+      case 'RepsToDistTime':
+        return sortRepsToDistTime(athletes);
     }
   
     // Return the original array if none of the conditions match
     return athletes;
   };
 
+  const sortRepsToDistTime = (athletes) => {
+    return athletes.sort((a, b) => {
+      // Determine the type and value of each athlete's result
+      const getTypeAndValue = (result) => {
+        let type, value;
+        if (result.endsWith('rep')) {
+          type = 'rep';
+          value = parseInt(result, 10);
+        } else if (result.endsWith('s')) {
+          type = 'time';
+          value = parseFloat(result);
+        } else { // Assuming the result ends with 'f', 'ft', or 'm'
+          type = 'distance';
+          value = parseFloat(result);
+        }
+        return { type, value };
+      };
+  
+      const aResult = getTypeAndValue(a.result);
+      const bResult = getTypeAndValue(b.result);
+  
+      // Prioritize by result type
+      const typeOrder = { 'time': 3, 'distance': 2, 'rep': 1 };
+      if (typeOrder[aResult.type] !== typeOrder[bResult.type]) {
+        return typeOrder[bResult.type] - typeOrder[aResult.type];
+      }
+  
+      // If the type is the same, sort by value (note the special handling for time vs. others)
+      if (aResult.type === 'time') {
+        // For times, lower is better
+        return aResult.value - bResult.value;
+      } else {
+        // For reps and distance, higher is better
+        return bResult.value - aResult.value;
+      }
+    });
+  };
+
+  const sortRepsInTime = (athletes) => {
+    return athletes.sort((a, b) => {
+      const [repsA, timeA] = a.result.match(/(\d{1,2}) in (\d{0,3}(\.\d{1,2})?)s/).slice(1, 3).map(Number);
+      const [repsB, timeB] = b.result.match(/(\d{1,2}) in (\d{0,3}(\.\d{1,2})?)s/).slice(1, 3).map(Number);
+  
+      // First, sort by reps (higher is better)
+      if (repsA !== repsB) return repsB - repsA;
+  
+      // If reps are equal, sort by time (lower is better)
+      return timeA - timeB;
+    });
+  };
+
+  const sortDistToTime = (athletes) => {
+    // Sort such that all times (ending in 's') are above all distances (ending in 'd'),
+    // and within each group, sort by the numeric value (lower times are better, shorter distances for those who didn't finish)
+    return athletes.sort((a, b) => {
+      const isATime = a.result.endsWith('s');
+      const isBTime = b.result.endsWith('s');
+      const numA = parseFloat(a.result);
+      const numB = parseFloat(b.result);
+
+      if (isATime && !isBTime) return -1; // A is time, B is distance, A goes first
+      if (!isATime && isBTime) return 1;  // A is distance, B is time, B goes first
+
+      // If both are times or both are distances, sort by numeric value
+      // For times, lower is better. For distances (not finish), higher is better.
+      return isATime ? numA - numB : numB - numA;
+    });
+  };
+
   const validateResults = () => {
     let isValidInput = true;
     // Validation for simple event types is accomplished inside the MyTextField component.
     //  Reps In Time was too complex of Regex for me to validate there without restricting input. 
-    if(event.eventType === 'RepsInTime'){
-      event.results.forEach((athlete) => {
-        const fullRegex = /^(\d{1,2} in \d{0,3}(\.\d{1,2})?s)$/;
-        console.log("result: " + athlete.result);
-        if (!fullRegex.test(athlete.result)) {
-          console.log("Failed")
-          isValidInput = false;
-        }
-        else {
-          console.log("Passed")
-        }
-      });
+    switch (event.eventType)
+    {
+      case 'RepsInTime':
+        event.results.forEach((athlete) => {
+          const fullRegex = /^(\d{1,2} in \d{0,3}(\.\d{1,2})?s)$/;
+          if (!fullRegex.test(athlete.result)) {
+            isValidInput = false;
+          }
+        });
+        break;
+      case 'RepsToDistTime':
+        event.results.forEach((athlete) => {
+          const regex1 = /^\d+rep$/; // supporting '2rep'
+          const regex2 = /^\d+(\.\d{1,2})?[smf](t)?$/; //supporting s, m, f, ft
+          if (!regex1.test(athlete.result) && !regex2.test(athlete.result)){
+            isValidInput = false;
+            console.log(athlete.result + " not valid")
+          }
+        });
     }
     return isValidInput;
   };
@@ -185,18 +244,15 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
 
   const handleScoreInput = (newResult, index) => {
     if (newResult === "" || newResult < 0){
+      console.log("abt3eabvre");
       return;
     }
     // Update the event.result array with the new value at the specified index
     const updatedResults = event.results.map((result, idx) => {
-      //console.log("index: " + index + " idx: " + idx);
       if (idx === index) {
         return {...result, result: newResult};
       }
       return result;
-    });
-    updatedResults.forEach((result, index) => {
-      //console.log("4- result assignment: " + result.athleteName + " result: " + result.result + " points: " + result.points);
     });
     onModifyEvent(eventIndex, {eventName:event.eventName, eventType:event.eventType, results:[...updatedResults]});
   };
@@ -207,6 +263,7 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
       return 'integer'
     }
     if (type === 'MWeight'
+    || type === 'MTime'
     || type === 'MDist')
     {
       return 'number'
@@ -219,9 +276,14 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
     {
       return 'reps-time'
     }
+    if (type === 'RepsToDistTime')
+    {
+      return 'reps-disttime'
+    }
     return 'text';
   }
 
+  // check to see if there exists a result to populate the input field with on creation
   const checkIfResult = (index) => {
     if(event.results[index])
       return event.results[index].result;
@@ -237,6 +299,8 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
     let tipText3 = "";
     if(event.eventType === "MWeight")
       tipText = "Weight in any units";
+    if(event.eventType === "MTime")
+      tipText = "Time in seconds";
     else if(event.eventType === "MReps")
       tipText = "Number of reps achieved";
     else if(event.eventType === "MDist")
@@ -250,6 +314,11 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
       tipText = "Reps in Time";
       tipText2 = "X in YY.YYs";
       tipText3 = "eg: '3 in 12.72s'";
+    }
+    else if(event.eventType === "RepsToDistTime"){
+      tipText = "Reps to Dist/Time";
+      tipText2 = "Time > Distance > Reps";
+      tipText3 = "units: rep, m, f, ft, s";
     }
     else
       tipText = "";
@@ -278,7 +347,9 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
     const pointsDivs = [];
 
     if(event.eventType === "MWeight")
-      resultDivs.push(<MyLabel text = "Wht"/>);
+      resultDivs.push(<MyLabel text = "Weight"/>);
+    else if(event.eventType === "MTime")
+      resultDivs.push(<MyLabel text = "Time"/>);
     else if(event.eventType === "MReps")
       resultDivs.push(<MyLabel text = "Reps"/>);
     else if(event.eventType === "MDist")
@@ -328,7 +399,6 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
     ;
     return div;
   }
-
 
   return (
         <div className='filler'>

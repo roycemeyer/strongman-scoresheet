@@ -36,9 +36,11 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
     if(
       newEventType !== "MWeight" &&
       newEventType !== "MReps" &&
+      newEventType !== "MTime" &&
+      newEventType !== "MDist" &&
       newEventType !== "DistToTime" &&
       newEventType !== "RepsInTime" &&
-      newEventType !== "MDist"
+      newEventType !== "RepsToDistTime"
       )
     {
       alert("Please include an event type");
@@ -316,10 +318,12 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
             <select className='input' value={selectedValue} onChange={handleEventTypeSelect}>
               <option value="">Event Type</option>
               <option className='input' value="MWeight">Max Weight</option>
+              <option className='input' value="MTime">Max Time</option>
               <option className='input' value="MReps">Max Reps</option>
               <option className='input' value="MDist">Max Distance</option>
               <option className='input' value="DistToTime">Distance in Time</option>
               <option className='input' value="RepsInTime">Reps in Time</option>
+              <option className='input' value="RepsToDistTime">Reps to Dist/Time</option>
             </select>
             <button className='button-styling' onClick={addEvent}>Add Event</button>
           </div>
