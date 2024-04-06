@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/strongman-archives/static/css/main.9f988367.css",
+    "main.js": "/strongman-archives/static/js/main.b85ad82a.js",
+    "index.html": "/strongman-archives/index.html",
+    "main.9f988367.css.map": "/strongman-archives/static/css/main.9f988367.css.map",
+    "main.b85ad82a.js.map": "/strongman-archives/static/js/main.b85ad82a.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.9f988367.css",
+    "static/js/main.b85ad82a.js"
+  ]
+}
