@@ -99,6 +99,9 @@
 .filler{
   background-color: rgb(58, 68, 55);
 }
+.input-filler{
+  background-color: rgb(93, 119, 84);
+}
 
 .input{
   background-color: rgb(93, 119, 84);

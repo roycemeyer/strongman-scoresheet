@@ -181,7 +181,7 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
     const resultsValidated = validateResults();
     if(!resultsValidated) return;
     const athletesWithResult = sortPositiveResults(event.results.filter(a => parseFloat(a.result) > 0));
-    const athletesWithZero = event.results.filter(a => parseFloat(a.result) === 0);
+    const athletesWithZero = event.results.filter(a => parseFloat(a.result) === 0 || a.result === '');
 
     let currentPlace = 1;
     let tiesBuffer = [];
@@ -243,10 +243,6 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
   };
 
   const handleScoreInput = (newResult, index) => {
-    if (newResult === "" || newResult < 0){
-      console.log("abt3eabvre");
-      return;
-    }
     // Update the event.result array with the new value at the specified index
     const updatedResults = event.results.map((result, idx) => {
       if (idx === index) {

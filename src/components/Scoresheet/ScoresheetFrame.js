@@ -1,4 +1,5 @@
 import React from 'react'
+import { SlArrowDown, SLArrowUp } from "react-icons/sl";
 import { useState, useRef } from 'react';
 import ScoresheetEvents from './ScoresheetEvents'
 import MyTextField from '../MyTextField';
@@ -9,6 +10,7 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
   const [newEventType, setNewEventType] = useState('');
   const [newAthleteName, setNewAthleteName] = useState('');
   const [selectedValue, setSelectedValue] = useState('');
+  const [sortedBy, setSortedBy] = useState('');
   const [events, setEvents] = useState([])
   const [athletes, setAthletes] = useState([])
   const eventFieldRef = useRef();
@@ -78,7 +80,10 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
       return;
     }
     // add athlete to list. 
-    const newAthlete = {athleteName: newAthleteName, totalPoints: 0, place: 0};
+    const newAthlete = {
+      athleteName: newAthleteName, 
+      totalPoints: 0, 
+      place: 0};
     setAthletes([...athletes, newAthlete]);
     clearAthleteNameInputText("");
     setNewAthleteName('');
@@ -232,6 +237,32 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
     return sortedBuffer;
   };
 
+  const sortAthletes = () => {
+    // Sort athletes by place in descending order
+    const sortedAthletes = [...athletes].sort((b, a) => b.place - a.place);
+
+    // Update the athletes state
+    setAthletes(sortedAthletes);
+
+    // For each event, sort its results array to match the sorted athletes order
+    const sortedEvents = events.map(event => {
+      const sortedResults = [...event.results].sort((b, a) => {
+        // Find the athlete object corresponding to the athleteName in the result
+        const athleteAPlace = sortedAthletes.find(athlete => athlete.athleteName === a.athleteName).place;
+        const athleteBPlace = sortedAthletes.find(athlete => athlete.athleteName === b.athleteName).place;
+        
+        // Compare based on the athlete's place value in descending order
+        return athleteBPlace - athleteAPlace;
+      });
+
+      // Return a new event object with the sorted results
+      return { ...event, results: sortedResults };
+    });
+
+    // Update the events state
+    setEvents(sortedEvents);
+  }
+
   const sortTiedAthletes = (tiedAthletes, countbackTotals) => {
     // The index of each athlete in `tiedAthletes` corresponds to the index of their countbackTotals
     return tiedAthletes.sort((a, b) => {
@@ -295,6 +326,7 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
     const div = 
       <div className='filler'>
         <button className='button-styling' onClick={updateScoresheet}>Update</button>
+        <button className='button-styling' onClick={sortAthletes}><SlArrowDown className='input-filler'/></button>
         <div className='horizontal-list'>
           <div className='vertical-list'>{placings}</div>
           <div className='soft-vertical-line'></div>

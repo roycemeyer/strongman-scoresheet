@@ -11,9 +11,18 @@ const MyTextField = forwardRef(({ inputType, onInputChange, placeholder, width, 
 
   const handleInputChange = (event) => {
     let newValue = event.target.value;
-
+    console.log(newValue);
+    if (newValue === ''){
+      onInputChange(newValue);
+      return;
+    }
+    console.log("didn't return");
     switch(inputType)
     {
+      case 'number':
+        if(newValue < 0)
+          newValue = 0;
+        break;
       case 'integer':
         newValue = newValue.replace(/[^0-9]/g, '');
         break;
