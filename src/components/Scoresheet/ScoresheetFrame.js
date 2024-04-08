@@ -10,7 +10,8 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
   const [newEventType, setNewEventType] = useState('');
   const [newAthleteName, setNewAthleteName] = useState('');
   const [selectedValue, setSelectedValue] = useState('');
-  const [sortedBy, setSortedBy] = useState('');
+  // -2 is no sort, -1 will be total, then 0-n will be event index
+  const [sortedBy, setSortedBy] = useState(-2);
   const [events, setEvents] = useState([])
   const [athletes, setAthletes] = useState([])
   const eventFieldRef = useRef();
@@ -237,8 +238,43 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
     return sortedBuffer;
   };
 
-  const sortAthletes = () => {
-    // Sort athletes by place in descending order
+  const sortAthletesByEvent = (eventIndex) => {
+    // Get the specific event by index
+    console.log("Heeeeere");
+    const referenceEvent = events[eventIndex];
+  
+    // Sort the reference event's results by place in ascending order
+    const sortedReferenceResults = [...referenceEvent.results].sort((a, b) => {
+      return a.place - b.place; // Corrected to sort 'place' in ascending order
+    });
+  
+    // Reorder athletes based on the sorted order of the reference event's results
+    const reorderedAthletes = sortedReferenceResults.map(result => {
+      return athletes.find(athlete => athlete.athleteName === result.athleteName);
+    });
+  
+    // Update the athletes state
+    setAthletes(reorderedAthletes);
+  
+    // For each event, sort its results array to match the reordered athletes
+    const sortedEvents = events.map(event => {
+      const sortedResults = reorderedAthletes.map(athlete => {
+        return event.results.find(result => result.athleteName === athlete.athleteName);
+      });
+  
+      // Filter out undefined results in case of mismatches
+      const filteredSortedResults = sortedResults.filter(result => result !== undefined);
+  
+      // Return a new event object with the sorted and filtered results
+      return { ...event, results: filteredSortedResults };
+    });
+    setSortedBy(eventIndex);
+    // Update the events state
+    setEvents(sortedEvents);
+  };
+
+  const sortAthletesByTotal = () => {
+    // Sort athletes by place in ascending order
     const sortedAthletes = [...athletes].sort((b, a) => b.place - a.place);
 
     // Update the athletes state
@@ -251,14 +287,14 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
         const athleteAPlace = sortedAthletes.find(athlete => athlete.athleteName === a.athleteName).place;
         const athleteBPlace = sortedAthletes.find(athlete => athlete.athleteName === b.athleteName).place;
         
-        // Compare based on the athlete's place value in descending order
+        // Compare based on the athlete's place value in ascending order
         return athleteBPlace - athleteAPlace;
       });
 
       // Return a new event object with the sorted results
       return { ...event, results: sortedResults };
     });
-
+    setSortedBy(-1);
     // Update the events state
     setEvents(sortedEvents);
   }
@@ -283,6 +319,14 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
     });
   }
 
+  const isSortedByEvent = (index) => {
+    if (sortedBy === index){
+      console.log("Sorted by: " + sortedBy + " index: " + index)
+      return true;
+    }
+    return false;
+  }
+
   const renderEvents = () => {
     const divs = [];
     events.forEach((event, index) => {
@@ -295,6 +339,8 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
           onModifyEvent={modifyEvent} 
           eventIndex={index}
           athletes={athletes}
+          isSortedBy={isSortedByEvent(index)}
+          sortAthletesByEvent={sortAthletesByEvent}
         />)
       divs.push(<div className='vertical-line'></div>)
     });
@@ -326,7 +372,7 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
     const div = 
       <div className='filler'>
         <button className='button-styling' onClick={updateScoresheet}>Update</button>
-        <button className='button-styling' onClick={sortAthletes}><SlArrowDown className='input-filler'/></button>
+        <button className='button-styling' onClick={sortAthletesByTotal}><SlArrowDown className='input-filler'/></button>
         <div className='horizontal-list'>
           <div className='vertical-list'>{placings}</div>
           <div className='soft-vertical-line'></div>

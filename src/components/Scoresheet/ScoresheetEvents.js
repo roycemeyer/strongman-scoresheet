@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import MyLabel from '../MyLabel'
+import { SlArrowDown, SLArrowUp } from "react-icons/sl";
 import MyTextField from '../MyTextField';
 
 // this is used in the useEffect to get the previous value of event.result to see if a change was made
@@ -11,7 +12,7 @@ function usePrevious(value){
   return ref.current;
 }
 
-function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, athletes}) {
+function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, sortAthletesByEvent, isSortedBy, key, athletes}) {
 
   // Update event results length when the athletes array changes
   useEffect(() => {
@@ -398,7 +399,10 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, key, at
 
   return (
         <div className='filler'>
-          <MyLabel text={event.eventName}/>
+          <div className='horizontal-list-clickable' onClick={() => sortAthletesByEvent(eventIndex)}>
+            <MyLabel text={event.eventName}/>
+            {isSortedBy ? <SlArrowDown className='filler'/> : null}
+          </div>
           {renderResults()}
           {renderTips()}
         </div>
