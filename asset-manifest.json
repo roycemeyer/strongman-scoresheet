@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/strongman-scoresheet/static/css/main.dfe3ffb2.css",
-    "main.js": "/strongman-scoresheet/static/js/main.3beecea1.js",
+    "main.js": "/strongman-scoresheet/static/js/main.ad006910.js",
     "index.html": "/strongman-scoresheet/index.html",
     "main.dfe3ffb2.css.map": "/strongman-scoresheet/static/css/main.dfe3ffb2.css.map",
-    "main.3beecea1.js.map": "/strongman-scoresheet/static/js/main.3beecea1.js.map"
+    "main.ad006910.js.map": "/strongman-scoresheet/static/js/main.ad006910.js.map"
   },
   "entrypoints": [
     "static/css/main.dfe3ffb2.css",
-    "static/js/main.3beecea1.js"
+    "static/js/main.ad006910.js"
   ]
 }
