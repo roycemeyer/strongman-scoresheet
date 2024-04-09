@@ -336,20 +336,23 @@ function ScoresheetEvents({isEditable, isEditAthEvents, event, onModifyEvent, ev
     else
       tipText = "";
     const div = 
-      <div className='filler'>
+      <div>
         <div className='horizontal-line'></div>
         <MyLabel 
           text={tipText}
           fontSize="12px"
-        ></MyLabel>
+          labelType="text-label"
+        />
         <MyLabel 
           text={tipText2}
           fontSize="12px"
-        ></MyLabel>
+          labelType="text-label"
+        />
         <MyLabel 
           text={tipText3}
           fontSize="12px"
-        ></MyLabel>
+          labelType="text-label"
+        />
       </div>
     return div;
   };
@@ -362,7 +365,8 @@ function ScoresheetEvents({isEditable, isEditAthEvents, event, onModifyEvent, ev
     if(isEditAthEvents)
     {
       resultDivs.push(
-        <select className='input' value={selectedValue} onChange={handleEventTypeSelect}>
+        <div className='header-label'>
+          <select className='input' value={selectedValue} onChange={handleEventTypeSelect}>
           <option value="">Event Type</option>
           <option className='input' value="MWeight">Max Weight</option>
           <option className='input' value="MTime">Max Time</option>
@@ -372,34 +376,41 @@ function ScoresheetEvents({isEditable, isEditAthEvents, event, onModifyEvent, ev
           <option className='input' value="RepsInTime">Reps in Time</option>
           <option className='input' value="RepsToDistTime">Reps to Dist/Time</option>
         </select>
+        </div>
+        
       );
     }
     else
     {
       if(event.eventType === "MWeight")
-        resultDivs.push(<MyLabel text = "Weight"/>);
+        resultDivs.push(<MyLabel text = "Weight" labelType="header-label"/>);
       else if(event.eventType === "MTime")
-        resultDivs.push(<MyLabel text = "Time"/>);
+        resultDivs.push(<MyLabel text = "Time" labelType="header-label"/>);
       else if(event.eventType === "MReps")
-        resultDivs.push(<MyLabel text = "Reps"/>);
+        resultDivs.push(<MyLabel text = "Reps" labelType="header-label"/>);
       else if(event.eventType === "MDist")
-        resultDivs.push(<MyLabel text = "Dist"/>);
+        resultDivs.push(<MyLabel text = "Dist" labelType="header-label"/>);
       else
-        resultDivs.push(<MyLabel text = "Result"/>);
+        resultDivs.push(<MyLabel text = "Result" labelType="header-label"/>);
     }
     resultDivs.push(<div className='horizontal-line'/>);
 
     //placingDivs.push(<MyLabel text = "Place"/>);
     //placingDivs.push(<div className='horizontal-line'/>);
 
-    pointsDivs.push(<MyLabel text = "Pts"/>);
+    pointsDivs.push(<MyLabel text = "Pts" labelType="header-label"/>);
     pointsDivs.push(<div className='horizontal-line'/>);
     let width = "80px";
     if(event.eventType === "RepsInTime") width = "80px";
     athletes.forEach((athlete, index) => {
+      let background = "list-label-2";
+      if(index % 2) {
+        background = "list-label-1";
+      }
       if (isEditable) {
         resultDivs.push(
           <MyTextField 
+            background={background}
             inputType={handleTextLimit(event.eventType)}
             onInputChange={(value) => handleScoreInput(value, index)} 
             width={width}
@@ -407,14 +418,13 @@ function ScoresheetEvents({isEditable, isEditAthEvents, event, onModifyEvent, ev
           />
         );
       } else {
-        // Assuming you want to show the result even when not editable
-        resultDivs.push(<MyLabel text={event.results[index].result} />);
+        // Show the result even when not editable
+        resultDivs.push(<MyLabel text={event.results[index].result} labelType={background} />);
       }
-      // For placingDivs and pointsDivs, if you plan to also make them dynamic, ensure correct access
       if(event.results.length === athletes.length)
       {
         //placingDivs.push(<MyLabel text={event.results[index].place}/>);
-        pointsDivs.push(<MyLabel text={event.results[index].points}/>);
+        pointsDivs.push(<MyLabel text={event.results[index].points} labelType={background} />);
       }
     });
 
@@ -431,17 +441,18 @@ function ScoresheetEvents({isEditable, isEditAthEvents, event, onModifyEvent, ev
   }
 
   return (
-        <div className='filler'>
+        <div className='filler-foreground'>
           <div className='horizontal-list-clickable' onClick={() => sortAthletesByEvent(eventIndex)}>
             {isEditAthEvents ?
               <MyTextField 
+                background="text-label"
                 onInputChange={(value) => handleEventNameChange(value)}
                 placeholder="Event Name"
                 initialValue={event.eventName}
               />
-              : <MyLabel text={event.eventName}/>
+              : <MyLabel text={event.eventName} labelType="text-label"/>
             }
-            {isSortedBy ? <SlArrowDown className='filler'/> : null}
+            {isSortedBy ? <SlArrowDown className='filler-foreground'/> : null}
           </div>
           {renderResults()}
           {renderTips()}

@@ -1,12 +1,12 @@
 import React from 'react';
 
-function MyLabel({ text, fontSize }) {
+function MyLabel({ text, fontSize, labelType }) {
   const divStyle = {
     fontSize: fontSize // This will apply the fontSize prop as the font size for the div
   };
 
   return (
-    <div className='my-label' style={divStyle}>
+    <div className={labelType} style={divStyle}>
       {text}
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
 
-const MyTextField = forwardRef(({ inputType, onInputChange, placeholder, width, initialValue }, ref) => {
+const MyTextField = forwardRef(({ background, inputType, onInputChange, placeholder, width, initialValue }, ref) => {
   const [inputValue, setInputValue] = useState('');
 
   useEffect(() => {
@@ -11,7 +11,6 @@ const MyTextField = forwardRef(({ inputType, onInputChange, placeholder, width, 
 
   const handleInputChange = (event) => {
     let newValue = event.target.value;
-    console.log(newValue);
     switch(inputType)
     {
       case 'number':
@@ -41,11 +40,16 @@ const MyTextField = forwardRef(({ inputType, onInputChange, placeholder, width, 
         // Permissively allow digits, spaces, "in", period, and 's'
         newValue = newValue.replace(/[^\dsmrepft]/g, '');
         // we validate during score calculations whether this is valid input
-      default: 
-        setInputValue(newValue);
+        break;
     }
+    setInputValue(newValue);
+  };
+
+  const submitInputChange = (event) => {
+    let newValue = event.target.value;
+    setInputValue(newValue);
     if (onInputChange) onInputChange(newValue);
-};
+  }
 
   const determineInputType = (inputType) => {
     if (inputType === "number"
@@ -61,12 +65,13 @@ const MyTextField = forwardRef(({ inputType, onInputChange, placeholder, width, 
   }));
 
   return (
-    <div className='my-textfield'>
+    <div className={background}>
       <input
-        type={determineInputType(inputType)}
         className='input'
+        type={determineInputType(inputType)}
         value={inputValue}
         onChange={handleInputChange}
+        onBlur={submitInputChange}
         placeholder={placeholder}
         style={{ width }}
       />

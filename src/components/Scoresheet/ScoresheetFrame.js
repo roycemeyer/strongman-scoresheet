@@ -397,16 +397,25 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
   const renderAthletes = () => {
     const divs = [];
     athletes.forEach((athlete, index) => {
+      let background = "athlete-label-2";
+      if (index % 2)
+        background = "athlete-label-1";
       if(isEditAthEvents)
       {
         divs.push(<MyTextField 
+          background={background}
           onInputChange={(value) => handleAthleteNameChange(value, index)}
           placeholder="Athlete Name"
           initialValue={athlete.athleteName}
         />)
       }
       else {
-        divs.push(<MyLabel text={athlete.athleteName} key={index}/>)
+        if (index % 2){
+          divs.push(<MyLabel text={athlete.athleteName} labelType={background}/>)
+        }
+        else {
+          divs.push(<MyLabel text={athlete.athleteName} labelType={background}/>)
+        }
       }
     });
     return divs;
@@ -416,26 +425,32 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
     const placings = [];
     const scores = [];
 
-    placings.push(<MyLabel text = "Place"/>);
+    placings.push(<MyLabel text = "Place" labelType="header-label"/>);
     placings.push(<div className='horizontal-line'/>);
 
-    scores.push(<MyLabel text = "Total"/>);
+    scores.push(<MyLabel text = "Total" labelType="header-label"/>);
     scores.push(<div className='horizontal-line'/>);
 
     athletes.forEach((athlete, index) => {
-      placings.push(<MyLabel text={athlete.place}/>)
-      scores.push(<MyLabel text={athlete.totalPoints}/>)
+      if (index % 2) {
+        placings.push(<MyLabel text={athlete.place}  labelType={"list-label-1"}/>)
+        scores.push(<MyLabel text={athlete.totalPoints}  labelType={"total-label-1"}/>)
+      }
+      else {
+        placings.push(<MyLabel text={athlete.place}  labelType={"list-label-2"}/>)
+        scores.push(<MyLabel text={athlete.totalPoints}  labelType={"total-label-2"}/>)
+      }
     });
     const div = 
-      <div className='filler'>
+      <div className='filler-foreground'>
         {isEditable ?
-          <div className='filler'>
+          <div className='filler-foreground'>
             <button className='button-styling' onClick={updateScoresheet}>Update</button>
-            <button className='button-styling' onClick={sortAthletesByTotal}><SlArrowDown className='input-filler'/></button>
+            <button className='button-styling' onClick={sortAthletesByTotal}><SlArrowDown className='filler-input'/></button>
           </div>
           : 
           <div>
-            <MyLabel text="Results:"/>
+            <MyLabel text="Results:" labelType={"text-label"}/>
           </div>
         }
         <div className='horizontal-list'>
@@ -450,14 +465,15 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
 
   const renderAddEvents = () => {
     return (
-      <div className='filler'>
+      <div className='filler-foreground'>
           <MyTextField 
+            background="filler-foreground"
             placeholder="Enter Event Name..." 
             inputType='text' 
             ref={eventFieldRef} 
             onInputChange={handleEventNameInput}
           />
-          <div className='scoresheet-events'>
+          <div className='filler-foreground'>
             <select className='input' value={selectedValue} onChange={handleEventTypeSelect}>
               <option value="">Event Type</option>
               <option className='input' value="MWeight">Max Weight</option>
@@ -476,8 +492,9 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
 
   const renderAddAthletes = () => {
     return (
-      <div className='filler'>
+      <div className='filler-foreground'>
           <MyTextField 
+            background="filler-foreground"
             placeholder="Enter Athlete Name..." 
             inputType='text' 
             ref={athleteFieldRef} 
@@ -491,31 +508,29 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
   };
 
   return (
-    <div className='add-section'>
-      <div className='scoresheet-events'>
-        <div className='athletes-list'>
-          <div className='right-justify'>
-            {isEditable &&
-              <button className='button-styling' onClick={handleEditAthEventsClick}>
-                {isEditAthEvents ?  
-                  <SlNote className='input-filler'/>
-                  : <SlPencil className='input-filler'/>}
-              </button>
-            }
-            <div className='vertical-list'><MyLabel text ={scoresheetName}/></div>
-          </div>
-            <MyLabel text={'Athletes'}/>
-          <div className='horizontal-line'/>
-          {renderAthletes()}
-          {isEditable ? renderAddAthletes() : <div/> }
+    <div className='scoresheet'>
+      <div className='athletes-list'>
+        <div className='split-justify'>
+          {isEditable &&
+            <button className='button-styling' onClick={handleEditAthEventsClick}>
+              {isEditAthEvents ?  
+                <SlNote className='filler-input'/>
+                : <SlPencil className='filler-input'/>}
+            </button>
+          }
+          <div className='right-justify'><MyLabel text ={scoresheetName} labelType="text-label"/></div>
         </div>
-        <div className='vertical-line'></div>
-          {renderScoresPlacings()}
-        <div className='vertical-line'></div>
-        <div className='add-event-wrapper'>
-          {renderEvents()}
-          {isEditable ? renderAddEvents() : <div/> }
-        </div>
+          <MyLabel text={'Athletes'} labelType="header-label"/>
+        <div className='horizontal-line'/>
+        {renderAthletes()}
+        {isEditable ? renderAddAthletes() : <div/> }
+      </div>
+      <div className='vertical-line'></div>
+      {renderScoresPlacings()}
+      <div className='vertical-line'></div>
+      <div className='add-event-wrapper'>
+        {renderEvents()}
+        {isEditable ? renderAddEvents() : <div/> }
       </div>
     </div>
   );
