@@ -1,5 +1,6 @@
 import React from 'react'
-import { SlArrowDown, SLArrowUp } from "react-icons/sl";
+//https://react-icons.github.io/react-icons/icons/sl/
+import { SlArrowDown, SlPencil, SlNote } from "react-icons/sl";
 import { useState, useRef } from 'react';
 import ScoresheetEvents from './ScoresheetEvents'
 import MyTextField from '../MyTextField';
@@ -10,12 +11,18 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
   const [newEventType, setNewEventType] = useState('');
   const [newAthleteName, setNewAthleteName] = useState('');
   const [selectedValue, setSelectedValue] = useState('');
-  // -2 is no sort, -1 will be total, then 0-n will be event index
+  // sortedBy: -2 is no sort, -1 is be total, then 0-n is be event index
   const [sortedBy, setSortedBy] = useState(-2);
   const [events, setEvents] = useState([])
   const [athletes, setAthletes] = useState([])
+
+  const [isEditAthEvents, setIsEditAthEvents] = useState(false);
   const eventFieldRef = useRef();
   const athleteFieldRef = useRef();
+
+  const handleEditAthEventsClick = () => {
+    setIsEditAthEvents(!isEditAthEvents);
+}
 
   // This form of modifyEvent forces each update to use the most recent events. 
   const modifyEvent = (eventIndex, newEventData) => {
@@ -28,6 +35,45 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
       }
       return updatedEvents; // Return the modified array to update the state
     });
+  };
+
+  const handleAthleteNameChange = (newName, index) => {
+    // Check for duplicate names excluding the current index
+    const nameExists = athletes.some((athlete, i) => i !== index && athlete.athleteName === newName);
+    if (nameExists) {
+      alert("Duplicate name detected. Please use a unique name for the athlete.");
+      return; // Exit the function without making changes
+    }
+
+    let updatedAthletes = [...athletes];
+    let updatedEvents = [...events];
+
+    if (newName === 'delete') {
+      // If newName is blank, remove the athlete
+      updatedAthletes.splice(index, 1);
+
+      // Remove the athlete from all events.results arrays using the same index
+      updatedEvents = updatedEvents.map(event => ({
+        ...event,
+        results: event.results.filter((_, i) => i !== index)
+      }));
+    } else {
+      // Update the athlete's name in the athletes array
+      updatedAthletes[index] = { ...updatedAthletes[index], athleteName: newName };
+
+      // Update the athlete's name in all events.results arrays using the same index
+      updatedEvents = updatedEvents.map(event => {
+        const updatedResults = [...event.results];
+        if (updatedResults[index]) {
+          updatedResults[index] = { ...updatedResults[index], athleteName: newName };
+        }
+        return { ...event, results: updatedResults };
+      });
+    }
+
+    // Use the React state updater functions
+    setAthletes(updatedAthletes);
+    setEvents(updatedEvents);
   };
 
   const addEvent = () => {
@@ -97,11 +143,11 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
   const handleEventTypeSelect = (event) => {
     setNewEventType(event.target.value);
     setSelectedValue(event.target.value);
-  }
+  };
 
   const resetSelect = () => {
     setSelectedValue('')
-  }
+  };
 
   const handleAthleteNameInput = (value) => {
     setNewAthleteName(value);
@@ -109,11 +155,11 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
 
   const clearEventNameInputText = () =>{
     eventFieldRef.current.clearText();
-  }
+  };
 
   const clearAthleteNameInputText = () =>{
     athleteFieldRef.current.clearText();
-  }
+  };
 
   const updateScoresheet = () => {
     const scoredAthletes = [...athletes];
@@ -142,7 +188,7 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
     const finalAthletes = [...athletePlacings]
       .sort((a, b) => athletes.findIndex(athlete => athlete.athleteName === a.athleteName) - athletes.findIndex(athlete => athlete.athleteName === b.athleteName));
       setAthletes(finalAthletes);
-  }
+  };
 
   const assignAthletePlacings = (scoredAthletes) => {
     scoredAthletes.sort((a, b) => b.totalPoints - a.totalPoints);
@@ -297,7 +343,7 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
     setSortedBy(-1);
     // Update the events state
     setEvents(sortedEvents);
-  }
+  };
 
   const sortTiedAthletes = (tiedAthletes, countbackTotals) => {
     // The index of each athlete in `tiedAthletes` corresponds to the index of their countbackTotals
@@ -317,7 +363,7 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
       // If all placings are tied, sort by name or maintain the existing order
       return a.athleteName.localeCompare(b.athleteName);
     });
-  }
+  };
 
   const isSortedByEvent = (index) => {
     if (sortedBy === index){
@@ -325,7 +371,7 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
       return true;
     }
     return false;
-  }
+  };
 
   const renderEvents = () => {
     const divs = [];
@@ -334,6 +380,7 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
       divs.push(
         <ScoresheetEvents 
           isEditable={isEditable} 
+          isEditAthEvents={isEditAthEvents}
           event={event} 
           key={index} 
           onModifyEvent={modifyEvent} 
@@ -345,15 +392,25 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
       divs.push(<div className='vertical-line'></div>)
     });
     return divs;
-  }
+  };
 
   const renderAthletes = () => {
     const divs = [];
     athletes.forEach((athlete, index) => {
-      divs.push(<MyLabel text={athlete.athleteName} key={index}/>)
+      if(isEditAthEvents)
+      {
+        divs.push(<MyTextField 
+          onInputChange={(value) => handleAthleteNameChange(value, index)}
+          placeholder="Athlete Name"
+          initialValue={athlete.athleteName}
+        />)
+      }
+      else {
+        divs.push(<MyLabel text={athlete.athleteName} key={index}/>)
+      }
     });
     return divs;
-  }
+  };
 
   const renderScoresPlacings = () => {
     const placings = [];
@@ -371,8 +428,16 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
     });
     const div = 
       <div className='filler'>
-        <button className='button-styling' onClick={updateScoresheet}>Update</button>
-        <button className='button-styling' onClick={sortAthletesByTotal}><SlArrowDown className='input-filler'/></button>
+        {isEditable ?
+          <div className='filler'>
+            <button className='button-styling' onClick={updateScoresheet}>Update</button>
+            <button className='button-styling' onClick={sortAthletesByTotal}><SlArrowDown className='input-filler'/></button>
+          </div>
+          : 
+          <div>
+            <MyLabel text="Results:"/>
+          </div>
+        }
         <div className='horizontal-list'>
           <div className='vertical-list'>{placings}</div>
           <div className='soft-vertical-line'></div>
@@ -381,7 +446,7 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
       </div>
     ;
     return div;
-  }
+  };
 
   const renderAddEvents = () => {
     return (
@@ -407,7 +472,7 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
           </div>
       </div>
     )
-  }
+  };
 
   const renderAddAthletes = () => {
     return (
@@ -423,13 +488,20 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
           </div>
       </div>
     )
-  }
+  };
 
   return (
     <div className='add-section'>
       <div className='scoresheet-events'>
         <div className='athletes-list'>
           <div className='right-justify'>
+            {isEditable &&
+              <button className='button-styling' onClick={handleEditAthEventsClick}>
+                {isEditAthEvents ?  
+                  <SlNote className='input-filler'/>
+                  : <SlPencil className='input-filler'/>}
+              </button>
+            }
             <div className='vertical-list'><MyLabel text ={scoresheetName}/></div>
           </div>
             <MyLabel text={'Athletes'}/>
@@ -447,6 +519,6 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
       </div>
     </div>
   );
-}
+};
 
 export default ScoresheetFrame

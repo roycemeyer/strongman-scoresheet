@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import MyLabel from '../MyLabel'
-import { SlArrowDown, SLArrowUp } from "react-icons/sl";
+import { SlArrowDown} from "react-icons/sl";
 import MyTextField from '../MyTextField';
 
 // this is used in the useEffect to get the previous value of event.result to see if a change was made
@@ -12,7 +12,14 @@ function usePrevious(value){
   return ref.current;
 }
 
-function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, sortAthletesByEvent, isSortedBy, key, athletes}) {
+function ScoresheetEvents({isEditable, isEditAthEvents, event, onModifyEvent, eventIndex, sortAthletesByEvent, isSortedBy, key, athletes}) {
+
+  // for editing the event type
+  const [selectedValue, setSelectedValue] = useState('');
+  const handleEventTypeSelect = (event) => {
+    setNewEventType(event.target.value);
+    setSelectedValue(event.target.value);
+  };
 
   // Update event results length when the athletes array changes
   useEffect(() => {
@@ -280,6 +287,15 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, sortAth
     return 'text';
   }
 
+  const handleEventNameChange = (value) => {
+    const updatedEvent = {...event, eventName: value};
+    onModifyEvent(eventIndex, {...updatedEvent});
+  }
+  const setNewEventType = (value) => {
+    const updatedEvent = {...event, eventType: value };
+    onModifyEvent(eventIndex, {...updatedEvent});
+  };
+
   // check to see if there exists a result to populate the input field with on creation
   const checkIfResult = (index) => {
     if(event.results[index])
@@ -343,17 +359,34 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, sortAth
     //const placingDivs = [];
     const pointsDivs = [];
 
-    if(event.eventType === "MWeight")
-      resultDivs.push(<MyLabel text = "Weight"/>);
-    else if(event.eventType === "MTime")
-      resultDivs.push(<MyLabel text = "Time"/>);
-    else if(event.eventType === "MReps")
-      resultDivs.push(<MyLabel text = "Reps"/>);
-    else if(event.eventType === "MDist")
-      resultDivs.push(<MyLabel text = "Dist"/>);
+    if(isEditAthEvents)
+    {
+      resultDivs.push(
+        <select className='input' value={selectedValue} onChange={handleEventTypeSelect}>
+          <option value="">Event Type</option>
+          <option className='input' value="MWeight">Max Weight</option>
+          <option className='input' value="MTime">Max Time</option>
+          <option className='input' value="MReps">Max Reps</option>
+          <option className='input' value="MDist">Max Distance</option>
+          <option className='input' value="DistToTime">Distance in Time</option>
+          <option className='input' value="RepsInTime">Reps in Time</option>
+          <option className='input' value="RepsToDistTime">Reps to Dist/Time</option>
+        </select>
+      );
+    }
     else
-      resultDivs.push(<MyLabel text = "Result"/>);
-
+    {
+      if(event.eventType === "MWeight")
+        resultDivs.push(<MyLabel text = "Weight"/>);
+      else if(event.eventType === "MTime")
+        resultDivs.push(<MyLabel text = "Time"/>);
+      else if(event.eventType === "MReps")
+        resultDivs.push(<MyLabel text = "Reps"/>);
+      else if(event.eventType === "MDist")
+        resultDivs.push(<MyLabel text = "Dist"/>);
+      else
+        resultDivs.push(<MyLabel text = "Result"/>);
+    }
     resultDivs.push(<div className='horizontal-line'/>);
 
     //placingDivs.push(<MyLabel text = "Place"/>);
@@ -400,7 +433,14 @@ function ScoresheetEvents({isEditable, event, onModifyEvent, eventIndex, sortAth
   return (
         <div className='filler'>
           <div className='horizontal-list-clickable' onClick={() => sortAthletesByEvent(eventIndex)}>
-            <MyLabel text={event.eventName}/>
+            {isEditAthEvents ?
+              <MyTextField 
+                onInputChange={(value) => handleEventNameChange(value)}
+                placeholder="Event Name"
+                initialValue={event.eventName}
+              />
+              : <MyLabel text={event.eventName}/>
+            }
             {isSortedBy ? <SlArrowDown className='filler'/> : null}
           </div>
           {renderResults()}

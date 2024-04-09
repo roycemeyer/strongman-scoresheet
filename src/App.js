@@ -69,6 +69,7 @@ function App() {
         <button className='button-styling' onClick={handleTiebreakerClick}>
           {tiebreakerText}
         </button>
+        <div className='vertical-line'></div>
         <MyTextField 
             placeholder="Enter Scoresheet Name..." 
             inputType='text' 

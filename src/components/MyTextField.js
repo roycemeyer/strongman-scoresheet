@@ -16,7 +16,6 @@ const MyTextField = forwardRef(({ inputType, onInputChange, placeholder, width, 
       onInputChange(newValue);
       return;
     }
-    console.log("didn't return");
     switch(inputType)
     {
       case 'number':
@@ -46,7 +45,7 @@ const MyTextField = forwardRef(({ inputType, onInputChange, placeholder, width, 
         // Permissively allow digits, spaces, "in", period, and 's'
         newValue = newValue.replace(/[^\dsmrepft]/g, '');
         // we validate during score calculations whether this is valid input
-      default:
+      default: 
         setInputValue(newValue);
     }
     if (onInputChange) onInputChange(newValue);
