@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/strongman-scoresheet/static/css/main.ada8fe9f.css",
-    "main.js": "/strongman-scoresheet/static/js/main.d742cd05.js",
+    "main.css": "/strongman-scoresheet/static/css/main.f550bba3.css",
+    "main.js": "/strongman-scoresheet/static/js/main.4c8f038c.js",
     "index.html": "/strongman-scoresheet/index.html",
-    "main.ada8fe9f.css.map": "/strongman-scoresheet/static/css/main.ada8fe9f.css.map",
-    "main.d742cd05.js.map": "/strongman-scoresheet/static/js/main.d742cd05.js.map"
+    "main.f550bba3.css.map": "/strongman-scoresheet/static/css/main.f550bba3.css.map",
+    "main.4c8f038c.js.map": "/strongman-scoresheet/static/js/main.4c8f038c.js.map"
   },
   "entrypoints": [
-    "static/css/main.ada8fe9f.css",
-    "static/js/main.d742cd05.js"
+    "static/css/main.f550bba3.css",
+    "static/js/main.4c8f038c.js"
   ]
 }
