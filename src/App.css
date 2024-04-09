@@ -85,13 +85,13 @@
 }
 .text-label{
   background-color: var(--foreground-colour);
-  padding-left: 4px;
-  padding-right: 4px;
+  padding-left: 8px;
+  padding-right: 8px;
 }
 .header-label{
   background-color: var(--backdrop-colour);
-  padding-left: 4px;
-  padding-right: 4px;
+  padding-left: 8px;
+  padding-right: 8px;
   display: flex;
   justify-content: left;
   align-items: center;
@@ -99,8 +99,8 @@
 }
 .total-label-1{
   background-color: var(--total-colour-1);
-  padding-left: 4px;
-  padding-right: 4px;
+  padding-left: 8px;
+  padding-right: 8px;
   display: flex;
   justify-content: left;
   align-items: center;
@@ -108,8 +108,8 @@
 }
 .total-label-2{
   background-color: var(--total-colour-2);
-  padding-left: 4px;
-  padding-right: 4px;
+  padding-left: 8px;
+  padding-right: 8px;
   display: flex;
   justify-content: left;
   align-items: center;
@@ -117,8 +117,8 @@
 }
 .list-label-1{
   background-color: var(--list-colour-1);
-  padding-left: 4px;
-  padding-right: 4px;
+  padding-left: 8px;
+  padding-right: 8px;
   font-size: 16px;
   display: flex;
   justify-content: left;
@@ -127,8 +127,8 @@
 }
 .list-label-2{
   background-color: var(--list-colour-2);
-  padding-left: 4px;
-  padding-right: 4px;
+  padding-left: 8px;
+  padding-right: 8px;
   font-size: 16px;
   display: flex;
   justify-content: left;
@@ -137,8 +137,8 @@
 }
 .athlete-label-1{
   background-color: var(--list-colour-1);
-  padding-left: 4px;
-  padding-right: 4px;
+  padding-left: 8px;
+  padding-right: 8px;
   display: flex;
   justify-content: left;
   align-items: center;
@@ -146,8 +146,8 @@
 }
 .athlete-label-2{
   background-color: var(--list-colour-2);
-  padding-left: 4px;
-  padding-right: 4px;
+  padding-left: 8px;
+  padding-right: 8px;
   display: flex;
   justify-content: left;
   align-items: center;
@@ -221,7 +221,7 @@
 }
 
 .vertical-line{
-  width: 2px;
+  width: 3px;
   background-color: var(--backdrop-colour);
 }
 .thyckk-horizontal-line{
