@@ -11,7 +11,7 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
   const [newEventType, setNewEventType] = useState('');
   const [newAthleteName, setNewAthleteName] = useState('');
   const [selectedValue, setSelectedValue] = useState('');
-  // sortedBy: -2 is no sort, -1 is be total, then 0-n is be event index
+  // sortedBy: -2 is no sort, -1 is by total, then 0-n is by event index
   const [sortedBy, setSortedBy] = useState(-2);
   const [events, setEvents] = useState([])
   const [athletes, setAthletes] = useState([])
@@ -171,13 +171,10 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
         //console.log("Events results List length: " + events.results.length)
         event.results.forEach(result => {
           if (result.athleteName === athlete.athleteName) {
-            console.log("Athlete: " + athlete.athleteName + " points: " + result.points)
             totalPoints += result.points;
           }
         });
       });
-      console.log("Athlete: " + athlete.athleteName + " points: " + totalPoints)
-      console.log("---------------------")
       athlete.totalPoints = totalPoints;
     });
 
@@ -191,23 +188,26 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
   };
 
   const assignAthletePlacings = (scoredAthletes) => {
-    scoredAthletes.sort((a, b) => b.totalPoints - a.totalPoints);
+    // We will always do last event sorting. This way, even if the Tiebreaker is countback, in the event they
+    //    tie even on countback (same number of 1sts, etc.,) then last event tiebreaker is used as a fallback. 
+    const leSortedAthletes = sortAthletesByEventPlacings(scoredAthletes); // last event sorted athletes
+    const sortedAthletes = leSortedAthletes.sort((a, b) => b.totalPoints - a.totalPoints);
     let tiesBuffer = [];
     let currentPlace = 1;
     const placedAthletes = [];
 
-    scoredAthletes.forEach((athlete, index) => {
-      // detect ties
-      if(scoredAthletes.length > index+1 && athlete.totalPoints === scoredAthletes[index+1].totalPoints)
-      {
-        tiesBuffer.push(athlete);
-        if((scoredAthletes.length === index+2 // to handle if the next is the last athlete in list
-        || athlete.totalPoints !== scoredAthletes[index+2].totalPoints)){ // Is this the last tie pair in the group?
-          // If it is the last tie pair in the group, add the next one since it won't tie with ITS next
-          tiesBuffer.push(scoredAthletes[index+1]);
-          // since last pair it's complete; calculate placing
-
-          if (isCountback){ // countback will place athletes based on most 1st place finishes, then 2nd if tied on 1st, etc.
+    if(isCountback){
+      console.log("Countback");
+      sortedAthletes.forEach((athlete, index) => {
+        // detect ties
+        if(sortedAthletes.length > index+1 && athlete.totalPoints === sortedAthletes[index+1].totalPoints)
+        {
+          tiesBuffer.push(athlete);
+          if((sortedAthletes.length === index+2 // to handle if the next is the last athlete in list
+          || athlete.totalPoints !== sortedAthletes[index+2].totalPoints)){ // Is this the last tie pair in the group?
+            // If it is the last tie pair in the group, add the next one since it won't tie with ITS next
+            tiesBuffer.push(sortedAthletes[index+1]);
+            // since last pair it's complete; calculate placing
             tiesBuffer.forEach((tiedAthlete) => {
               console.log(tiedAthlete.athleteName + " tied with points: " + tiedAthlete.totalPoints)
             });
@@ -217,22 +217,26 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
             });
           }
         }
-      }
-      // Check if last tie in group
-      else if (tiesBuffer.indexOf(athlete) !== -1){ // if the athlete exists in the tie buffer but is not tied with its next, it's the last of a tie group
-        tiesBuffer = []; // clear out the buffer since this tie group is completed
-        return;
-      }
-      else { // if we got here, it means there's no tie and no tie group to worry about\
-        console.log("No tie with athlete "+ athlete.athleteName)
-        placedAthletes.push({
-          athleteName: athlete.athleteName,
-          result: athlete.result,
-          place: 0,
-          totalPoints: athlete.totalPoints
-        });
-      }
-    });
+        // Check if last tie in group
+        else if (tiesBuffer.indexOf(athlete) !== -1){ // if the athlete exists in the tie buffer but is not tied with its next, it's the last of a tie group
+          tiesBuffer = []; // clear out the buffer since this tie group is completed
+          return;
+        }
+        else { // if we got here, it means there's no tie and no tie group to worry about\
+          console.log("No tie with athlete "+ athlete.athleteName)
+          placedAthletes.push({
+            athleteName: athlete.athleteName,
+            result: athlete.result,
+            place: 0,
+            totalPoints: athlete.totalPoints
+          });
+        }
+      });
+    }
+    else {
+      placedAthletes.splice(0, placedAthletes.length, ...sortedAthletes);
+    }
+    
     console.log("Sorted Athlete Placings: ")
     placedAthletes.forEach((athlete) => {
       console.log(athlete.athleteName + " score: " + athlete.totalPoints)
@@ -241,6 +245,23 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
     });
     return placedAthletes;
   };
+
+  const sortAthletesByEventPlacings = (athletes) => {
+    // The purpose of this is to address ties by "last event" rules. 
+    //    It's not always exactly last event because if they tied in the last event, it sorts by next-last and so on.
+    events.forEach((event) => {
+      // Sort the athletes array based on the placements in each event
+      athletes.sort((a, b) => {
+        // Find places of athletes a and b in the event's results
+        let placeA = event.results.find(result => result.athleteName === a.athleteName).place;
+        let placeB = event.results.find(result => result.athleteName === b.athleteName).place;
+
+        // Compare places for ascending order sort
+        return placeA - placeB;
+      });
+    })
+    return athletes; // Return the sorted athletes array
+}
 
   const countback = (tiesBuffer) => {
     const sortedBuffer = [];
@@ -277,16 +298,11 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
     sortedTies.forEach((tiedAthlete) => {
       sortedBuffer.push(tiedAthlete);
     });
-    console.log("Tiebreaker results order: ")
-    sortedTies.forEach((athlete) => {
-      console.log("ties: " + athlete.athleteName)
-    });
     return sortedBuffer;
   };
 
   const sortAthletesByEvent = (eventIndex) => {
     // Get the specific event by index
-    console.log("Heeeeere");
     const referenceEvent = events[eventIndex];
   
     // Sort the reference event's results by place in ascending order
@@ -528,7 +544,7 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
       <div className='vertical-line'></div>
       {renderScoresPlacings()}
       <div className='vertical-line'></div>
-      <div className='add-event-wrapper'>
+      <div className='horizontal-list'>
         {renderEvents()}
         {isEditable ? renderAddEvents() : <div/> }
       </div>

@@ -16,6 +16,7 @@ function ScoresheetEvents({isEditable, isEditAthEvents, event, onModifyEvent, ev
 
   // for editing the event type
   const [selectedValue, setSelectedValue] = useState('');
+
   const handleEventTypeSelect = (event) => {
     setNewEventType(event.target.value);
     setSelectedValue(event.target.value);
@@ -93,7 +94,7 @@ function ScoresheetEvents({isEditable, isEditAthEvents, event, onModifyEvent, ev
       // Determine the type and value of each athlete's result
       const getTypeAndValue = (result) => {
         let type, value;
-        if (result.endsWith('rep')) {
+        if (result.endsWith('rep') || result.endsWith('reps')) {
           type = 'rep';
           value = parseInt(result, 10);
         } else if (result.endsWith('s')) {
@@ -127,6 +128,10 @@ function ScoresheetEvents({isEditable, isEditAthEvents, event, onModifyEvent, ev
   };
 
   const sortRepsInTime = (athletes) => {
+    console.log("number of Reps In Time: " + athletes.length);
+    athletes.forEach((athlete) => {
+      console.log("Reps In Time Result: " + athlete.result);
+    });
     return athletes.sort((a, b) => {
       const [repsA, timeA] = a.result.match(/(\d{1,2}) in (\d{0,3}(\.\d{1,2})?)s/).slice(1, 3).map(Number);
       const [repsB, timeB] = b.result.match(/(\d{1,2}) in (\d{0,3}(\.\d{1,2})?)s/).slice(1, 3).map(Number);
@@ -157,37 +162,8 @@ function ScoresheetEvents({isEditable, isEditAthEvents, event, onModifyEvent, ev
     });
   };
 
-  const validateResults = () => {
-    let isValidInput = true;
-    // Validation for simple event types is accomplished inside the MyTextField component.
-    //  Reps In Time was too complex of Regex for me to validate there without restricting input. 
-    switch (event.eventType)
-    {
-      case 'RepsInTime':
-        event.results.forEach((athlete) => {
-          const fullRegex = /^(\d{1,2} in \d{0,3}(\.\d{1,2})?s)$/;
-          if (!fullRegex.test(athlete.result)) {
-            isValidInput = false;
-          }
-        });
-        break;
-      case 'RepsToDistTime':
-        event.results.forEach((athlete) => {
-          const regex1 = /^\d+rep$/; // supporting '2rep'
-          const regex2 = /^\d+(\.\d{1,2})?[smf](t)?$/; //supporting s, m, f, ft
-          if (!regex1.test(athlete.result) && !regex2.test(athlete.result)){
-            isValidInput = false;
-            console.log(athlete.result + " not valid")
-          }
-        });
-    }
-    return isValidInput;
-  };
-
   const calculateResults = () => {
     // Step 1: Sort the results based on the 'result' property
-    const resultsValidated = validateResults();
-    if(!resultsValidated) return;
     const athletesWithResult = sortPositiveResults(event.results.filter(a => parseFloat(a.result) > 0));
     const athletesWithZero = event.results.filter(a => parseFloat(a.result) === 0 || a.result === '');
 
@@ -292,8 +268,16 @@ function ScoresheetEvents({isEditable, isEditAthEvents, event, onModifyEvent, ev
     onModifyEvent(eventIndex, {...updatedEvent});
   }
   const setNewEventType = (value) => {
-    const updatedEvent = {...event, eventType: value };
-    onModifyEvent(eventIndex, {...updatedEvent});
+    if(value !== ""){
+      const results = [...event.results];
+      results.forEach(result => {
+        result.result = 0;
+        result.place = 0;
+        result.points = 0;
+      });
+      const updatedEvent = {...event, eventType: value, results: results };
+      onModifyEvent(eventIndex, {...updatedEvent});
+    }
   };
 
   // check to see if there exists a result to populate the input field with on creation
@@ -310,31 +294,36 @@ function ScoresheetEvents({isEditable, isEditAthEvents, event, onModifyEvent, ev
     let tipText = "";
     let tipText2 = "";
     let tipText3 = "";
-    if(event.eventType === "MWeight")
-      tipText = "Weight in any units";
-    if(event.eventType === "MTime")
-      tipText = "Time in seconds";
-    else if(event.eventType === "MReps")
-      tipText = "Number of reps achieved";
-    else if(event.eventType === "MDist")
-      tipText = "Distance in any units";
-    else if(event.eventType === "DistToTime"){
-      tipText = "Best Time - time in s";
-      tipText2 = "or distance in m or ft";
-      tipText3 = "eg: '42.3s' or '12.73m'";
+    switch (event.eventType){
+      case "MWeight":
+        tipText = "Weight in any units";
+        break;
+      case "MTime":
+        tipText = "Time in seconds";
+        break;
+      case "MReps":
+        tipText = "Number of reps achieved";
+        break;
+      case "MDist":
+        tipText = "Distance in any units";
+        break;
+      case "DistToTime":
+        tipText = "Best Time - time in s";
+        tipText2 = "or distance in m or ft";
+        tipText3 = "eg: '42.3s' or '12.73m'";
+        break;
+      case "RepsInTime":
+        tipText = "Reps in Time";
+        tipText2 = "X in YY.YYs";
+        tipText3 = "eg: '3 in 12.72s'";
+        break;
+      case "RepsToDistTime":
+        tipText = "Reps to Dist/Time";
+        tipText2 = "Time > Distance > Reps";
+        tipText3 = "units: rep, m, f, ft, s";
+        break;
     }
-    else if(event.eventType === "RepsInTime"){
-      tipText = "Reps in Time";
-      tipText2 = "X in YY.YYs";
-      tipText3 = "eg: '3 in 12.72s'";
-    }
-    else if(event.eventType === "RepsToDistTime"){
-      tipText = "Reps to Dist/Time";
-      tipText2 = "Time > Distance > Reps";
-      tipText3 = "units: rep, m, f, ft, s";
-    }
-    else
-      tipText = "";
+
     const div = 
       <div>
         <div className='horizontal-line'></div>
