@@ -106,6 +106,13 @@ const MyTextField = forwardRef(({ background, inputType, onInputChange, placehol
         }
         // Return original input if no patterns matched (optional: could handle errors differently)
         return newValue;
+      case 'dist-time':
+        regex = /^(\d+)\.((s)|(m)|(f|ft))$/; // Matches "42.ft"
+        if (regex.test(newValue)) {
+          // Remove the period when followed directly by 'ft'
+          return newValue.replace('.', '');
+        }
+        break;
       default: return newValue;
     }
   };
