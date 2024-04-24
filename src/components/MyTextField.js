@@ -81,7 +81,7 @@ const MyTextField = forwardRef(({ background, inputType, onInputChange, placehol
         if(regex.test(newValue)) {
           return newValue.replace(regex, "$1 in $2s");
         }
-        break;
+        return newValue;
       case 'reps-disttime':
         // Normalize accepted inputs
         const trimmedInput = newValue.trim(); // Trim whitespace
@@ -104,7 +104,6 @@ const MyTextField = forwardRef(({ background, inputType, onInputChange, placehol
                 }
             }
         }
-        // Return original input if no patterns matched (optional: could handle errors differently)
         return newValue;
       case 'dist-time':
         regex = /^(\d+)\.((s)|(m)|(f|ft))$/; // Matches "42.ft"
@@ -112,7 +111,7 @@ const MyTextField = forwardRef(({ background, inputType, onInputChange, placehol
           // Remove the period when followed directly by 'ft'
           return newValue.replace('.', '');
         }
-        break;
+        return newValue;
       default: return newValue;
     }
   };
