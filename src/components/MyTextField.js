@@ -1,6 +1,6 @@
 import React, { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
 
-const MyTextField = forwardRef(({ background, inputType, onInputChange, placeholder, width, initialValue }, ref) => {
+const MyTextField = forwardRef(({ background, inputType, onInputChange, placeholder, width, initialValue, onEnter }, ref) => {
   const [inputValue, setInputValue] = useState('');
 
   useEffect(() => {
@@ -126,14 +126,20 @@ const MyTextField = forwardRef(({ background, inputType, onInputChange, placehol
     }
     setInputValue(newValue);
     if (onInputChange) onInputChange(newValue);
-  }
+  };
 
   const determineInputType = (inputType) => {
     if (inputType === "number"
     || inputType === "integer")
       return 'number';
     return 'text'; // Use 'text' type for all custom validations
-  }
+  };
+
+  const handleKeyDown = (event) => {
+    if(event.key === 'Enter' && onEnter) {
+      onEnter(inputValue);
+    }
+  };
 
   useImperativeHandle(ref, () => ({
     clearText() {
@@ -150,6 +156,7 @@ const MyTextField = forwardRef(({ background, inputType, onInputChange, placehol
         onChange={handleInputChange}
         onBlur={submitInputChange}
         placeholder={placeholder}
+        onKeyDown={handleKeyDown}
         style={{ width }}
       />
     </div>

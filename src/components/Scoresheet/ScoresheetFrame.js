@@ -111,8 +111,13 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
     resetSelect();
   };
 
-  const addAthlete = () => {
-    if(!newAthleteName || newAthleteName === '')
+  const addAthlete = (athleteName) => {
+    // We can use the state if we're hitting the button, or the parameter if we're hitting enter and there's no time to set the state
+    let athleteN = '';
+    if(athleteName !== '') athleteN = athleteName;
+    else athleteN = newAthleteName;
+
+    if(athleteN === '')
     {
       alert("Please include an Athlete name");
       return;
@@ -120,7 +125,7 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
     // ensure athlete is unique
     let athleteUnique = true;
     athletes.forEach((athlete) => {
-      if (athlete.athleteName === newAthleteName) athleteUnique = false
+      if (athlete.athleteName === athleteN) athleteUnique = false
     });
     if (!athleteUnique){
       alert("Athlete already present. Cannot add duplicate athlete.");
@@ -128,11 +133,11 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
     }
     // add athlete to list. 
     const newAthlete = {
-      athleteName: newAthleteName, 
+      athleteName: athleteN, 
       totalPoints: 0, 
       place: 0};
     setAthletes([...athletes, newAthlete]);
-    clearAthleteNameInputText("");
+    clearAthleteNameInputText('');
     setNewAthleteName('');
   };
 
@@ -515,9 +520,10 @@ function ScoresheetFrame({isEditable, isCountback, scoresheetName}) {
             inputType='text' 
             ref={athleteFieldRef} 
             onInputChange={handleAthleteNameInput}
+            onEnter={addAthlete}
           />
           <div className='scoresheet-athletes'>
-            <button className='button-styling' onClick={addAthlete}>Add Athlete</button>
+            <button className='button-styling' onClick={() => addAthlete('')}>Add Athlete</button>
           </div>
       </div>
     )
